@@ -47,9 +47,15 @@ self.addEventListener('fetch', function (event) {
     caches.open(CACHE_NAME).then(function (cache) {
         return cache.match(event.request).then(function (response) {
             //B8
-            return response || fetch(event.request).then(function (networkResponse) {
-                cache.put(event.request, networkResponse.clone());
-                return networkResponse;
+            if (response) {
+                    return response; 
+                }
+                return fetch(event.request).then(function (networkResponse) {
+                    cache.put(event.request, networkResponse.clone());
+                    return networkResponse; 
+                }).catch(function (error) {
+                    console.error('Fetching and caching new data failed: ', error);
+                    throw error;
             });
         });
     })
