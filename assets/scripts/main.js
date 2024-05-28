@@ -45,10 +45,26 @@ function initializeServiceWorker() {
   // We first must register our ServiceWorker here before any of the code in
   // sw.js is executed.
   // B1. TODO - Check if 'serviceWorker' is supported in the current browser
+  if ('serviceWorker' in navigator) {
   // B2. TODO - Listen for the 'load' event on the window object.
+    window.addEventListener('load', function() {
+      //B3
+      navigator.serviceWorker.register('./sw.js')
+      //B4
+      .then(function(registration) {
+        console.log('ServiceWorker registration successful with scope: ', registration.scope);
+      })
+      //B5
+      .catch(function(error) {
+        console.error('ServiceWorker registration failed: ', error);
+      });
+    });
+  }
+
   // Steps B3-B6 will be *inside* the event listener's function created in B2
   // B3. TODO - Register './sw.js' as a service worker (The MDN article
   //            "Using Service Workers" will help you here)
+
   // B4. TODO - Once the service worker has been successfully registered, console
   //            log that it was successful.
   // B5. TODO - In the event that the service worker registration fails, console
@@ -68,15 +84,44 @@ async function getRecipes() {
   // EXPOSE - START (All expose numbers start with A)
   // A1. TODO - Check local storage to see if there are any recipes.
   //            If there are recipes, return them.
+  let recipe = localStorage.getItem('recipes');
+  if (recipe) { 
+      return JSON.parse(recipe);
+  }
   /**************************/
   // The rest of this method will be concerned with requesting the recipes
   // from the network
   // A2. TODO - Create an empty array to hold the recipes that you will fetch
+  let recipes = [];
   // A3. TODO - Return a new Promise. If you are unfamiliar with promises, MDN
   //            has a great article on them. A promise takes one parameter - A
   //            function (we call these callback functions). That function will
   //            take two parameters - resolve, and reject. These are functions
   //            you can call to either resolve the Promise or Reject it.
+  return new Promise(async (resolve, reject) => {
+    //A4
+    for (let url of RECIPE_URLS) {
+    //A5
+      try{
+        //A6
+        const response = await fetch(url);
+        //A7
+        const recipe1 = await response.json();
+        //A8
+        recipes.push(recipe1);
+        //A9
+        if (recipes.length === RECIPE_URLS.length) {
+          saveRecipesToStorage(recipes);
+          resolve(recipes);
+        }
+        //A10
+      } catch (error) { 
+        console.error('Failed to fetch recipes:', error); 
+        //A11
+        reject(error); 
+      }
+    }
+  });
   /**************************/
   // A4-A11 will all be *inside* the callback function we passed to the Promise
   // we're returning
